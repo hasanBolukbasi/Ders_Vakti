@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Ders Vakti</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#6EE619">
+<link rel="manifest" href="manifest.json">
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #6EE619;
+    color: #1a1a1a;
+    text-align: center;
+    margin: 0;
+    padding-top: 25px;
+}
+
+#gun {
+    font-size: 16px;
+}
+
+#ders {
+    font-size: 22px;
+    margin-top: 10px;
+}
+
+#sure {
+    margin-top: 5px;
+}
+
+#sureSayilar {
+    font-size: 40px;
+    font-weight: bold;
+}
+</style>
+
+<script>
+/* Ders programları */
+var haftaIci = [
+  { ad:"1. Ders", basla:"08:40", bitir:"09:20" },
+  { ad:"2. Ders", basla:"09:30", bitir:"10:10" },
+  { ad:"3. Ders", basla:"10:20", bitir:"11:00" },
+  { ad:"4. Ders", basla:"11:10", bitir:"11:50" },
+  { ad:"5. Ders", basla:"12:00", bitir:"12:40" },
+  { ad:"Öğle Arası", basla:"12:40", bitir:"13:10", ara:true },
+  { ad:"6. Ders", basla:"13:10", bitir:"13:50" },
+  { ad:"7. Ders", basla:"14:00", bitir:"14:40" },
+  { ad:"8. Ders", basla:"14:50", bitir:"15:30" }
+];
+
+var cuma = [
+  { ad:"1. Ders", basla:"08:30", bitir:"09:10" },
+  { ad:"2. Ders", basla:"09:20", bitir:"10:00" },
+  { ad:"3. Ders", basla:"10:10", bitir:"10:50" },
+  { ad:"4. Ders", basla:"11:00", bitir:"11:40" },
+  { ad:"5. Ders", basla:"11:50", bitir:"12:30" },
+  { ad:"Öğle Arası", basla:"12:30", bitir:"13:20", ara:true },
+  { ad:"6. Ders", basla:"13:20", bitir:"14:00" },
+  { ad:"7. Ders", basla:"14:10", bitir:"14:50" },
+  { ad:"8. Ders", basla:"15:00", bitir:"15:40" }
+];
+
+function saatYap(t) {
+    var p = t.split(":");
+    var d = new Date();
+    d.setHours(p[0], p[1], 0, 0);
+    return d;
+}
+
+function baslat() {
+    setInterval(function () {
+        var simdi = new Date();
+        var gunNo = simdi.getDay();
+        var program, gunAdi;
+
+        if (gunNo === 5) {
+            program = cuma;
+            gunAdi = "Cuma";
+        } else if (gunNo >= 1 && gunNo <= 4) {
+            program = haftaIci;
+            gunAdi = "Hafta İçi";
+        } else {
+            document.getElementById("gun").innerHTML = "Bugün ders yok";
+            document.getElementById("ders").innerHTML = "";
+            document.getElementById("sure").innerHTML = "🎉";
+            return;
+        }
+
+        document.getElementById("gun").innerHTML = gunAdi;
+
+        var bulundu = false;
+
+        for (var i = 0; i < program.length; i++) {
+            var b = saatYap(program[i].basla);
+            var s = saatYap(program[i].bitir);
+
+            if (simdi >= b && simdi < s && !program[i].ara) {
+                bulundu = true;
+                var fark = s - simdi;
+                var dk = Math.floor(fark / 60000);
+                var sn = Math.floor((fark % 60000) / 1000);
+
+                document.getElementById("ders").innerHTML =
+                    program[i].ad + "in bitmesine kalan süre";
+
+                document.getElementById("sure").innerHTML =
+                    "<span id='sureSayilar'>" + dk + " dk " + sn + " sn</span>";
+                break;
+            }
+        }
+
+        if (!bulundu) {
+            var sonraki = null;
+            for (var i = 0; i < program.length; i++) {
+                var b = saatYap(program[i].basla);
+                if (simdi < b && !program[i].ara) {
+                    sonraki = program[i];
+                    break;
+                }
+            }
+
+            if (sonraki) {
+                var fark = saatYap(sonraki.basla) - simdi;
+                var dk = Math.floor(fark / 60000);
+                var sn = Math.floor((fark % 60000) / 1000);
+
+                document.getElementById("ders").innerHTML =
+                    sonraki.ad + "in başlamasına kalan süre";
+
+                document.getElementById("sure").innerHTML =
+                    "<span id='sureSayilar'>" + dk + " dk " + sn + " sn</span>";
+            } else {
+                document.getElementById("ders").innerHTML = "Bugünlük Dersler Bitti";
+                document.getElementById("sure").innerHTML = "🎉";
+            }
+        }
+    }, 1000);
+}
+
+/* Service Worker */
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+</script>
+</head>
+
+<body onload="baslat()">
+    <div id="gun"></div>
+    <div id="ders">Yükleniyor...</div>
+    <div id="sure"></div>
+</body>
+</html>
